@@ -1,0 +1,78 @@
+services:
+  nginx:
+    image: nginx
+    container_name: nginx
+    build:
+      context: .
+      dockerfile: requirements/nginx/Dockerfile
+    depends_on:
+      - wordpress
+    ports:
+      - "443:443"
+    volumes:
+      - ./requirements/nginx/conf/:/etc/nginx/http.d/
+      - ./requirements/nginx/tools:/etc/nginx/ssl/
+      - wp-volume:/var/www/
+    networks:
+      - inception
+    restart: always
+
+  mariadb:
+    image: mariadb
+    container_name: mariadb
+    build:
+      context: .
+      dockerfile: requirements/mariadb/Dockerfile
+      args:
+        DB_NAME: ${DB_NAME}
+        DB_USER: ${DB_USER}
+        DB_PASS: ${DB_PASS}
+        DB_ROOT: ${DB_ROOT}
+    ports:
+      - "3306:3306"
+    volumes:
+      - db-volume:/var/lib/mysql
+    networks:
+      - inception
+    restart: always
+
+  wordpress:
+    image: wordpress
+    container_name: wordpress
+    env_file:
+      - .env
+    build:
+      context: .
+      dockerfile: requirements/wordpress/Dockerfile
+    depends_on:
+      - mariadb
+    volumes:
+      - wp-volume:/var/www/
+    networks:
+      - inception
+    restart: always
+
+#Volumes persist even after the containers are removed.
+volumes:
+  wp-volume:
+    name: wordpress
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/${USER}/data/wordpress
+#o: bind mount option, tells Docker to mount an existing directory from the host filesystem into the container.
+#type: none, type of mount, none means that Docker doesn't attempt to interpret the filesystem type, using directly the directory provided in the device field.
+#device specifies the path on the host machine that will be mounted.
+
+  db-volume:
+    name: mariadb
+    #driver: local
+    driver_opts:
+      o: bind
+      type: none
+      device: /home/${USER}/data/mariadb
+      
+networks:
+  inception:
+    name: Devaneio
+    driver: bridge
