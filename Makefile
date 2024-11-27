@@ -4,7 +4,7 @@ include srcs/.env
 
 data:
 	@bash ./srcs/requirements/wordpress/tools/create_dbdirs.sh
-	echo "Considere executar: ~$ sudo chmod 777 data"
+	@echo "Considere executar: ~$ sudo chmod 777 data"
 
 env:
 	@bash ./create_env.sh
@@ -32,11 +32,8 @@ clean: down
 	@sudo rm -rf ~/data/
 
 fclean: down
-	@docker-compose --file ./srcs/docker-compose.yml --env-file srcs/.env down --volumes
-	@docker image prune --all --force
-	@docker system prune --all --force --volumes
+	@docker-compose --file ./srcs/docker-compose.yml --env-file srcs/.env down --volumes --rmi
 	@docker network prune --force
-	@docker volume prune --force
 	@sudo rm srcs/.env srcs/requirements/tools/*
 	@sudo rm -rf ~/data
 
